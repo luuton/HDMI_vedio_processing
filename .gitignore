@@ -1,0 +1,7 @@
+.Xil/
+image_process.cache/
+image_process.hw/
+image_process.ip_user_files/
+image_process.sim/
+vivado.jou
+vivado.log

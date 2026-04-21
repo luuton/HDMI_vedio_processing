@@ -1,0 +1,112 @@
+vhdl xpm  \
+"E:/Xilinx/Vivado/2021.2/data/ip/xpm/xpm_VCOMP.vhd" \
+
+vhdl vid_phy_controller_v2_2_12  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/4964/hdl/src/vhd/nidru_20_v_7.vhd" \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/4964/hdl/src/vhd/bs_flex_v_2.vhd" \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/4964/hdl/src/vhd/nidru_20_wrapper.vhd" \
+
+vhdl axi_lite_ipif_v3_0_4  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/66ea/hdl/axi_lite_ipif_v3_0_vh_rfs.vhd" \
+
+vhdl v_tc_v6_2_3  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/ee1d/hdl/v_tc_v6_2_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_v_hdmi_tx_ss_0/bd_0/ip/ip_1/sim/bd_3ea7_v_tc_0.vhd" \
+
+vhdl v_tc_v6_1_13  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/b92e/hdl/v_tc_v6_1_vh_rfs.vhd" \
+
+vhdl fifo_generator_v13_2_6  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/8ae1/hdl/fifo_generator_v13_2_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_gt_refclk_buf_0/util_ds_buf.vhd" \
+"../../../bd/exdes/ip/exdes_gt_refclk_buf_0/sim/exdes_gt_refclk_buf_0.vhd" \
+
+vhdl lib_cdc_v1_0_2  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/ef1e/hdl/lib_cdc_v1_0_rfs.vhd" \
+
+vhdl interrupt_control_v3_1_4  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/a040/hdl/interrupt_control_v3_1_vh_rfs.vhd" \
+
+vhdl axi_gpio_v2_0_27  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/a5bb/hdl/axi_gpio_v2_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_axi_gpio_0/sim/exdes_axi_gpio_0.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_conv_funs_pkg.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_proc_common_pkg.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_ipif_pkg.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_family_support.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_family.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_soft_reset.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/proc_common_v3_00_a/hdl/src/vhdl/exdes_clk_wiz_0_pselect_f.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/axi_lite_ipif_v1_01_a/hdl/src/vhdl/exdes_clk_wiz_0_address_decoder.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/axi_lite_ipif_v1_01_a/hdl/src/vhdl/exdes_clk_wiz_0_slave_attachment.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/axi_lite_ipif_v1_01_a/hdl/src/vhdl/exdes_clk_wiz_0_axi_lite_ipif.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/exdes_clk_wiz_0_clk_wiz_drp.vhd" \
+"../../../bd/exdes/ip/exdes_clk_wiz_0/exdes_clk_wiz_0_axi_clk_config.vhd" \
+"../../../bd/exdes/ip/exdes_aud_pat_gen_0/exdes/rtl/aud_pat_gen/aud_pat_gen_v1_0_0.vhd" \
+"../../../bd/exdes/ip/exdes_hdmi_acr_ctrl_0/exdes/rtl/hdmi_acr_ctrl_v1_0_0/hdmi_acr_ctrl_v1_0_0.vhd" \
+"../../../bd/exdes/ip/exdes_hdmi_acr_ctrl_0/exdes/rtl/hdmi_acr_ctrl_v1_0_0/hdmi_acr_ctrl_v1_0_0_14.vhd" \
+
+vhdl axi_intc_v4_1_16  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/0b29/hdl/axi_intc_v4_1_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_axi_intc_0/sim/exdes_axi_intc_0.vhd" \
+
+vhdl proc_sys_reset_v5_0_13  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/8842/hdl/proc_sys_reset_v5_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_rst_processor_1_100M_0/sim/exdes_rst_processor_1_100M_0.vhd" \
+"../../../bd/exdes/ip/exdes_rst_processor_1_300M_0/sim/exdes_rst_processor_1_300M_0.vhd" \
+
+vhdl mdm_v3_2_22  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/3865/hdl/mdm_v3_2_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_mdm_0/sim/exdes_mdm_0.vhd" \
+
+vhdl microblaze_v11_0_8  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/5058/hdl/microblaze_v11_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_mblaze_0/sim/exdes_mblaze_0.vhd" \
+
+vhdl lib_pkg_v1_0_2  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/0513/hdl/lib_pkg_v1_0_rfs.vhd" \
+
+vhdl axi_iic_v2_1_1  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/89a5/hdl/axi_iic_v2_1_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_fmch_axi_iic_0/sim/exdes_fmch_axi_iic_0.vhd" \
+
+vhdl lib_srl_fifo_v1_0_2  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/51ce/hdl/lib_srl_fifo_v1_0_rfs.vhd" \
+
+vhdl axi_uartlite_v2_0_29  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/f22f/hdl/axi_uartlite_v2_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_axi_uartlite_0/sim/exdes_axi_uartlite_0.vhd" \
+
+vhdl lmb_v10_v3_0_11  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/c2ed/hdl/lmb_v10_v3_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_dlmb_v10_0/sim/exdes_dlmb_v10_0.vhd" \
+"../../../bd/exdes/ip/exdes_ilmb_v10_0/sim/exdes_ilmb_v10_0.vhd" \
+
+vhdl lmb_bram_if_cntlr_v4_0_20  \
+"../../../../v_hdmi_rx_ss_0_ex.gen/sources_1/bd/exdes/ipshared/a8d1/hdl/lmb_bram_if_cntlr_v4_0_vh_rfs.vhd" \
+
+vhdl xil_defaultlib  \
+"../../../bd/exdes/ip/exdes_dlmb_bram_if_cntlr_0/sim/exdes_dlmb_bram_if_cntlr_0.vhd" \
+"../../../bd/exdes/ip/exdes_ilmb_bram_if_cntlr_0/sim/exdes_ilmb_bram_if_cntlr_0.vhd" \
+
+nosort
