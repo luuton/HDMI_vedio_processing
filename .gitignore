@@ -1,0 +1,13 @@
+.Xil/
+hdmi_loop.cache/
+hdmi_loop.gen/
+hdmi_loop.hw/
+hdmi_loop.ip_user_files/
+hdmi_loop.sim/
+hdmi_loop.runs/
+hdmi_loop.srcs/utils_1/
+.claude/
+*.dcp
+09.HDMI测试实验.pdf
+vivado.jou
+vivado.log
