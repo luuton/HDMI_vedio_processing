@@ -26,7 +26,11 @@ module time_alignment(
 );
 integer i;
 
-parameter src_delay = 6;
+// Must equal the total latency of the tx path (src_min 1 + search_block_min 4 +
+// tx_get 3) so the delayed src lines up with the transmission map. tx_get gained 2
+// cycles when its combinational divide became a registered reciprocal multiply, so
+// this went 6 -> 8. Change one, change the other.
+parameter src_delay = 8;
 
 reg                         pre_src_frame_vsync_d[src_delay - 1 : 0]    ;
 reg                         pre_src_frame_href_d[src_delay - 1 : 0]     ;

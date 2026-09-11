@@ -136,11 +136,25 @@ end
     assign  post_frame_clken    =   pre_tx_frame_clken_d[36]                                    ;
 `else
 
-    // Signed quotient of the restore division J = value_tem / tx. Kept signed so a
-    // negative result (pixel darker than A) is detectable and saturated before use.
-    wire signed [17 : 0]    q_r = value_tem_r / $signed({10'b0, tx_value_d1});
-    wire signed [17 : 0]    q_g = value_tem_g / $signed({10'b0, tx_value_d1});
-    wire signed [17 : 0]    q_b = value_tem_b / $signed({10'b0, tx_value_d1});
+    // Reciprocal table instead of a combinational 18/8 divide. The divider needed
+    // ~32 ns in a 6.734 ns period at 148.5 MHz and was the worst failing path in
+    // implementation (value_tem_r_reg[*] -> post_img_*_reg[*]).
+    // recip[v] = round(2^16 / v); tx_value is floored at tx_min = 26 before it gets
+    // here, so entries below 26 are unreachable and mirror v = 26 to stay in 12 bits.
+    // Cost: one LUTRAM read + one DSP48 per channel, and 1 extra cycle of latency
+    // (absorbed internally - src and tx enter this module already aligned).
+    reg     [11 : 0]    recip_rom   [0:255];
+    integer             ri;
+    initial begin
+        for(ri = 0; ri < 256; ri = ri + 1)
+            if(ri < 26) recip_rom[ri] = 12'd2521;
+            else        recip_rom[ri] = (65536 + (ri >> 1)) / ri;
+    end
+
+    reg         [11 : 0]    recip_r                 ;
+    reg     signed [29 : 0] prod_r                  ;
+    reg     signed [29 : 0] prod_g                  ;
+    reg     signed [29 : 0] prod_b                  ;
 
     reg         [7  : 0]    post_img_r;
     reg         [7  : 0]    post_img_g;
@@ -151,6 +165,40 @@ end
     reg                     pre_tx_frame_vsync_d2   ;
     reg                     pre_tx_frame_href_d2    ;
     reg                     pre_tx_frame_clken_d2   ;
+    reg                     pre_tx_frame_vsync_d3   ;
+    reg                     pre_tx_frame_href_d3    ;
+    reg                     pre_tx_frame_clken_d3   ;
+
+    // reciprocal lookup, registered so the LUTRAM read stays off the multiply path
+    always@(posedge clk or negedge rst_n)begin
+        if(!rst_n)  recip_r <=  12'd0;
+        else        recip_r <=  recip_rom[tx_value_d1];
+    end
+
+    // value_tem is signed 18-bit (|v| <= 130305) and recip is 12-bit (<= 2521), so the
+    // product is < 2^29 and fits signed 30 bits. One DSP48 per channel.
+    always@(posedge clk or negedge rst_n)begin
+        if(!rst_n)begin
+            prod_r  <=  30'sd0;
+            prod_g  <=  30'sd0;
+            prod_b  <=  30'sd0;
+        end
+        else begin
+            prod_r  <=  value_tem_r * $signed({6'b0, recip_r});
+            prod_g  <=  value_tem_g * $signed({6'b0, recip_r});
+            prod_b  <=  value_tem_b * $signed({6'b0, recip_r});
+        end
+    end
+
+    // Signed quotient of the restore division J = value_tem / tx, scaled back by 2^16
+    // with round-to-nearest. Kept signed so a negative result (pixel darker than A) is
+    // detectable and saturated before use.
+    wire signed [29 : 0]    qsum_r  =   prod_r + 30'sd32768;
+    wire signed [29 : 0]    qsum_g  =   prod_g + 30'sd32768;
+    wire signed [29 : 0]    qsum_b  =   prod_b + 30'sd32768;
+    wire signed [17 : 0]    q_r     =   qsum_r >>> 16;
+    wire signed [17 : 0]    q_g     =   qsum_g >>> 16;
+    wire signed [17 : 0]    q_b     =   qsum_b >>> 16;
 
     // Saturate the restore result into [0, 255]; tx is bounded below (>= tx_min),
     // so q is finite. q_r[17] is the sign bit -> clamp negatives to 0.
@@ -172,6 +220,12 @@ end
             pre_tx_frame_vsync_d1   <=  0                       ;
             pre_tx_frame_href_d1    <=  0                       ;
             pre_tx_frame_clken_d1   <=  0                       ;
+            pre_tx_frame_vsync_d2   <=  0                       ;
+            pre_tx_frame_href_d2    <=  0                       ;
+            pre_tx_frame_clken_d2   <=  0                       ;
+            pre_tx_frame_vsync_d3   <=  0                       ;
+            pre_tx_frame_href_d3    <=  0                       ;
+            pre_tx_frame_clken_d3   <=  0                       ;
         end
         else begin
             pre_tx_frame_vsync_d1   <=  pre_tx_frame_vsync      ;
@@ -180,13 +234,16 @@ end
             pre_tx_frame_vsync_d2   <=  pre_tx_frame_vsync_d1   ;
             pre_tx_frame_href_d2    <=  pre_tx_frame_href_d1    ;
             pre_tx_frame_clken_d2   <=  pre_tx_frame_clken_d1   ;
+            pre_tx_frame_vsync_d3   <=  pre_tx_frame_vsync_d2   ;
+            pre_tx_frame_href_d3    <=  pre_tx_frame_href_d2    ;
+            pre_tx_frame_clken_d3   <=  pre_tx_frame_clken_d2   ;
         end
     end
 
     assign  post_img            =   {post_img_r[7 : 0],post_img_g[7 : 0],post_img_b[7 : 0]}     ;
-    assign  post_frame_vsync    =   pre_tx_frame_vsync_d2                                       ;
-    assign  post_frame_href     =   pre_tx_frame_href_d2                                        ;
-    assign  post_frame_clken    =   pre_tx_frame_clken_d2                                       ;
+    assign  post_frame_vsync    =   pre_tx_frame_vsync_d3                                       ;
+    assign  post_frame_href     =   pre_tx_frame_href_d3                                        ;
+    assign  post_frame_clken    =   pre_tx_frame_clken_d3                                       ;
 
 `endif                                   
 

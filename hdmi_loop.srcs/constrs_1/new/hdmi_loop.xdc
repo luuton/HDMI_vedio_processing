@@ -119,3 +119,89 @@ set_property PACKAGE_PIN J17 [get_ports {key_in[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {key_in[3]}]
 
 create_clock -period 6.734 -name vin_clk -waveform {0.000 3.367} [get_ports vin_clk]
+
+###############################################################################
+# Video over Ethernet -- RGMII PHY
+#
+# Pinout copied from 26_video_ethernet/auto_create_project/src/constraints/top.xdc
+# and checked pin-by-pin against everything above: no conflicts.
+#
+# NOTE: no `IOB TRUE` here, deliberately. Unlike the vout_* parallel RGB bus,
+# the RGMII pins are driven/received through ODDR/IDDR primitives, which already
+# specify the IOLOGIC site. Adding IOB TRUE on top makes the placer reject the
+# ODDR/IDDR placement.
+###############################################################################
+create_clock -period 8.000 -name rgmii_rxc [get_ports rgmii_rxc]
+
+set_property PACKAGE_PIN V18 [get_ports rgmii_rxc]
+set_property PACKAGE_PIN R19 [get_ports rgmii_rxctl]
+set_property PACKAGE_PIN P17 [get_ports {rgmii_rxd[3]}]
+set_property PACKAGE_PIN U17 [get_ports {rgmii_rxd[2]}]
+set_property PACKAGE_PIN U18 [get_ports {rgmii_rxd[1]}]
+set_property PACKAGE_PIN P19 [get_ports {rgmii_rxd[0]}]
+set_property PACKAGE_PIN P15 [get_ports rgmii_txc]
+set_property PACKAGE_PIN N17 [get_ports rgmii_txctl]
+set_property PACKAGE_PIN R16 [get_ports {rgmii_txd[3]}]
+set_property PACKAGE_PIN R17 [get_ports {rgmii_txd[2]}]
+set_property PACKAGE_PIN P16 [get_ports {rgmii_txd[1]}]
+set_property PACKAGE_PIN N14 [get_ports {rgmii_txd[0]}]
+set_property PACKAGE_PIN R14 [get_ports e_reset]
+set_property PACKAGE_PIN N13 [get_ports e_mdc]
+set_property PACKAGE_PIN P14 [get_ports e_mdio]
+
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii_rxc]
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii_rxctl]
+set_property IOSTANDARD LVCMOS33 [get_ports {rgmii_rxd[*]}]
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii_txc]
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii_txctl]
+set_property IOSTANDARD LVCMOS33 [get_ports {rgmii_txd[*]}]
+set_property IOSTANDARD LVCMOS33 [get_ports e_reset]
+set_property IOSTANDARD LVCMOS33 [get_ports e_mdc]
+set_property IOSTANDARD LVCMOS33 [get_ports e_mdio]
+
+# SLEW FAST on the transmit side only. The receive pins are inputs; SLEW has no
+# meaning there and setting it produces a spurious critical warning.
+set_property SLEW FAST [get_ports rgmii_txc]
+set_property SLEW FAST [get_ports rgmii_txctl]
+set_property SLEW FAST [get_ports {rgmii_txd[*]}]
+
+# MDIO is never driven (e_mdio is parked at 1'bz). Without a board pull-up the
+# pin would float, so enable the internal one.
+set_property PULLUP TRUE [get_ports e_mdio]
+
+# The reference design shipped these pins unconstrained, which is exactly where
+# the timing budget actually lives:
+#   - RX goes through a FIXED IDELAY of 30 taps (2.34 ns at the 200 MHz REFCLK,
+#     ~78 ps/tap). Fixed, not VAR_LOAD/auto-calibrated, so it does not adapt.
+#     2.34 ns centres the sampling point in RGMII's 4 ns DDR data eye, so the
+#     PHY is assumed to source rxd/rxctl edge-aligned with rxc (its own internal
+#     RGMII RX delay off) and the FPGA supplies the whole shift.
+#   - TX is edge-aligned: util_gmii_to_rgmii regenerates rgmii_txc from the same
+#     clock that launches the data (ODDR, SAME_EDGE), with no phase shift. So
+#     txd/txctl and txc leave together and the PHY must sample with its internal
+#     RGMII TX delay, or the board must have matched the trace lengths.
+#
+# The numbers below model board/PLL skew, not silicon requirements -- they are
+# deliberately loose. If the PHY datasheet gives real setup/hold values, replace
+# them; do not tighten them to "make timing pass".
+set_input_delay  -clock [get_clocks rgmii_rxc] -max  1.0 -min  0.0 \
+    [get_ports {rgmii_rxd[*] rgmii_rxctl}]
+
+# rgmii_txc is regenerated in the fabric, so it needs its own generated clock to
+# be a meaningful reference for txd/txctl -- otherwise the output ports have no
+# launch clock and go unconstrained.
+create_generated_clock -name rgmii_txc_out -source [get_ports rgmii_rxc] \
+    -divide_by 1 [get_ports rgmii_txc]
+
+set_output_delay -clock [get_clocks rgmii_txc_out] -max  1.0 -min -1.0 \
+    [get_ports {rgmii_txd[*] rgmii_txctl}]
+
+# Three clocks that are genuinely unrelated: the 200 MHz board oscillator (and
+# everything the MMCM derives from it), the 148.5 MHz HDMI input pixel clock,
+# and the 125 MHz RGMII receive clock. Without this the tools try to time the
+# paths that cross the camera_fifo, which are only made safe by the FIFO's own
+# CDC, and the reported failures bury the real ones.
+set_clock_groups -asynchronous \
+    -group [get_clocks -include_generated_clocks sys_clk_p] \
+    -group [get_clocks -include_generated_clocks vin_clk] \
+    -group [get_clocks -include_generated_clocks rgmii_rxc]
