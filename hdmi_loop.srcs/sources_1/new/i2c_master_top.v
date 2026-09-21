@@ -3,16 +3,16 @@ module i2c_master_top
 	input rst,
 	input clk,
 	
-	// I2C signals
-	// i2c clock line
-	input  scl_pad_i,       // SCL-line input
-	output scl_pad_o,       // SCL-line output (always 1'b0)
-	output scl_padoen_o,    // SCL-line output enable (active low)
+	// I2C 信号
+	// I2C 时钟线
+	input  scl_pad_i,       // SCL 线输入
+	output scl_pad_o,       // SCL 线输出(恒为 1'b0)
+	output scl_padoen_o,    // SCL 线输出使能(低有效)
 
-	// i2c data line
-	input  sda_pad_i,       // SDA-line input
-	output sda_pad_o,       // SDA-line output (always 1'b0)
-	output sda_padoen_o,    // SDA-line output enable (active low)
+	// I2C 数据线
+	input  sda_pad_i,       // SDA 线输入
+	output sda_pad_o,       // SDA 线输出(恒为 1'b0)
+	output sda_padoen_o,    // SDA 线输出使能(低有效)
 	
 	input i2c_read_req,
 	output i2c_read_req_ack,

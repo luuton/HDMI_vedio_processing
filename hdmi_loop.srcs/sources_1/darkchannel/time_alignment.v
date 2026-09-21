@@ -26,11 +26,18 @@ module time_alignment(
 );
 integer i;
 
-// Must equal the total latency of the tx path (src_min 1 + search_block_min 4 +
-// tx_get 3) so the delayed src lines up with the transmission map. tx_get gained 2
-// cycles when its combinational divide became a registered reciprocal multiply, so
-// this went 6 -> 8. Change one, change the other.
-parameter src_delay = 8;
+// 必须等于 tx 通路的总延迟(src_min 1 + WINDOW_PASSES * 4 +
+// tx_get 3),这样被延迟的 src 才能与透射率图对齐,否则
+// 画面与它自己的透射率图会水平错位,去雾就会
+// 拖影。这两个数字以前都变过:tx_get 在把它的
+// 组合逻辑除法换成寄存的倒数乘法时多了 2 个周期(6 -> 8),而每多
+// 一级暗通道窗口处理又多 4 个(8 -> 16,对应 WINDOW_PASSES = 3)。
+//
+// 这里是推导出来的而不是写死的,这样两者就不会漂移 —— 以前
+// 手工维护的 8 加上"改一个就得改另一个"的注释是个陷阱,
+// 只有仿真才能发现。WINDOW_PASSES 必须与 dark_channel 的一致。
+parameter WINDOW_PASSES = 3;
+parameter src_delay = 1 + 4 * WINDOW_PASSES + 3;
 
 reg                         pre_src_frame_vsync_d[src_delay - 1 : 0]    ;
 reg                         pre_src_frame_href_d[src_delay - 1 : 0]     ;

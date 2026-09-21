@@ -303,7 +303,7 @@ def make_decoder(mode, port, dst_ip, src_ip=BOARD_IP, port_base=PORT_BASE):
             st.port_range += 1
             return None
         if n != PAYLOAD_BYTES:
-            st.pay_len += 1                              # counted, still accepted
+            st.pay_len += 1                              # 计数,但仍接受
         return line, memoryview(buf)[:n]
 
     return decode_raw if mode == "raw" else decode_port

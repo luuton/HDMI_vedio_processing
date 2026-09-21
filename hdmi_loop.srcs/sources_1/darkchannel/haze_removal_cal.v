@@ -21,15 +21,15 @@ module haze_removal_cal(
 );
 // `define Xilinx_IP
 
-parameter   tx_min   =   8'd26;//min_value of A, 0.1 * 2*8
+parameter   tx_min   =   8'd26;//A 的最小值,0.1 * 2*8
 
 wire        [7  : 0]    tx_value                 ;
 assign                  tx_value =    pre_tx_img < tx_min ? tx_min : pre_tx_img;
 
-// Signed (pre_img - A) and (A * tx) terms. The image difference MUST be signed:
-// most haze pixels satisfy I < A, and an unsigned 8-bit subtraction wraps to a
-// large positive number. All terms stay within signed 18 bits, so the accumulator
-// value_tem = (I - A)*256 + A*tx is exact (range -65280 .. 130305, fits in 18 bits).
+// 带符号的 (pre_img - A) 与 (A * tx) 项。图像差值必须用带符号运算:
+// 大多数有雾像素满足 I < A,而无符号 8 位减法会回绕成
+// 一个很大的正数。各项都在带符号 18 位以内,所以累加值
+// value_tem = (I - A)*256 + A*tx 是精确的(范围 -65280 .. 130305,18 位可容纳)。
 wire signed [8  : 0]    s_r     = $signed({1'b0, pre_img[23:16]}) - $signed({1'b0, pre_A});
 wire signed [8  : 0]    s_g     = $signed({1'b0, pre_img[15: 8]}) - $signed({1'b0, pre_A});
 wire signed [8  : 0]    s_b     = $signed({1'b0, pre_img[ 7: 0]}) - $signed({1'b0, pre_A});
@@ -61,7 +61,7 @@ always@(posedge clk or negedge rst_n)begin
         value_tem_b     <=  0;
     end
     else begin
-        // Fixed-point restore numerator: value_tem = (I - A)*256 + A*tx (signed).
+        // 定点还原的分子:value_tem = (I - A)*256 + A*tx(带符号)。
         value_tem_r     <=  ( s_r * 18'sd256 ) + a_tx;
         value_tem_g     <=  ( s_g * 18'sd256 ) + a_tx;
         value_tem_b     <=  ( s_b * 18'sd256 ) + a_tx;
@@ -83,31 +83,31 @@ end
     reg                     pre_tx_frame_clken_d      [36:0] ;
 
     div_gen_0 u_div_gen_0(
-    .aclk                     (clk    ),                                      // input wire aclk
-    .s_axis_divisor_tvalid    (1      ),    // input wire s_axis_divisor_tvalid
-    .s_axis_divisor_tdata     (tx_value_d1),      // input wire [7 : 0] s_axis_divisor_tdata
-    .s_axis_dividend_tvalid   (1),  // input wire s_axis_dividend_tvalid
-    .s_axis_dividend_tdata    (value_tem_r),    // input wire [39 : 0] s_axis_dividend_tdata
-    .m_axis_dout_tvalid       (),          // output wire m_axis_dout_tvalid
-    .m_axis_dout_tdata        ({post_img_r,temp_r})            // output wire [47 : 0] m_axis_dout_tdata
+    .aclk                     (clk    ),                                      // 输入 wire aclk
+    .s_axis_divisor_tvalid    (1      ),    // 输入 wire s_axis_divisor_tvalid
+    .s_axis_divisor_tdata     (tx_value_d1),      // 输入 wire [7 : 0] s_axis_divisor_tdata
+    .s_axis_dividend_tvalid   (1),  // 输入 wire s_axis_dividend_tvalid
+    .s_axis_dividend_tdata    (value_tem_r),    // 输入 wire [39 : 0] s_axis_dividend_tdata
+    .m_axis_dout_tvalid       (),          // 输出 wire m_axis_dout_tvalid
+    .m_axis_dout_tdata        ({post_img_r,temp_r})            // 输出 wire [47 : 0] m_axis_dout_tdata
     );
     div_gen_0 u_div_gen_1(
-    .aclk                     (clk    ),                                      // input wire aclk
-    .s_axis_divisor_tvalid    (1      ),    // input wire s_axis_divisor_tvalid
-    .s_axis_divisor_tdata     (tx_value_d1),      // input wire [7 : 0] s_axis_divisor_tdata
-    .s_axis_dividend_tvalid   (1),  // input wire s_axis_dividend_tvalid
-    .s_axis_dividend_tdata    (value_tem_g),    // input wire [39 : 0] s_axis_dividend_tdata
-    .m_axis_dout_tvalid       (),          // output wire m_axis_dout_tvalid
-    .m_axis_dout_tdata        ({post_img_g,temp_g})            // output wire [47 : 0] m_axis_dout_tdata
+    .aclk                     (clk    ),                                      // 输入 wire aclk
+    .s_axis_divisor_tvalid    (1      ),    // 输入 wire s_axis_divisor_tvalid
+    .s_axis_divisor_tdata     (tx_value_d1),      // 输入 wire [7 : 0] s_axis_divisor_tdata
+    .s_axis_dividend_tvalid   (1),  // 输入 wire s_axis_dividend_tvalid
+    .s_axis_dividend_tdata    (value_tem_g),    // 输入 wire [39 : 0] s_axis_dividend_tdata
+    .m_axis_dout_tvalid       (),          // 输出 wire m_axis_dout_tvalid
+    .m_axis_dout_tdata        ({post_img_g,temp_g})            // 输出 wire [47 : 0] m_axis_dout_tdata
     );
     div_gen_0 u_div_gen_2(
-    .aclk                     (clk    ),                                      // input wire aclk
-    .s_axis_divisor_tvalid    (1      ),    // input wire s_axis_divisor_tvalid
-    .s_axis_divisor_tdata     (tx_value_d1),      // input wire [7 : 0] s_axis_divisor_tdata
-    .s_axis_dividend_tvalid   (1),  // input wire s_axis_dividend_tvalid
-    .s_axis_dividend_tdata    (value_tem_b),    // input wire [39 : 0] s_axis_dividend_tdata
-    .m_axis_dout_tvalid       (),          // output wire m_axis_dout_tvalid
-    .m_axis_dout_tdata        ({post_img_b,temp_b})            // output wire [47 : 0] m_axis_dout_tdata
+    .aclk                     (clk    ),                                      // 输入 wire aclk
+    .s_axis_divisor_tvalid    (1      ),    // 输入 wire s_axis_divisor_tvalid
+    .s_axis_divisor_tdata     (tx_value_d1),      // 输入 wire [7 : 0] s_axis_divisor_tdata
+    .s_axis_dividend_tvalid   (1),  // 输入 wire s_axis_dividend_tvalid
+    .s_axis_dividend_tdata    (value_tem_b),    // 输入 wire [39 : 0] s_axis_dividend_tdata
+    .m_axis_dout_tvalid       (),          // 输出 wire m_axis_dout_tvalid
+    .m_axis_dout_tdata        ({post_img_b,temp_b})            // 输出 wire [47 : 0] m_axis_dout_tdata
     );
 
     always@(posedge clk or negedge rst_n)begin
@@ -136,13 +136,13 @@ end
     assign  post_frame_clken    =   pre_tx_frame_clken_d[36]                                    ;
 `else
 
-    // Reciprocal table instead of a combinational 18/8 divide. The divider needed
-    // ~32 ns in a 6.734 ns period at 148.5 MHz and was the worst failing path in
-    // implementation (value_tem_r_reg[*] -> post_img_*_reg[*]).
-    // recip[v] = round(2^16 / v); tx_value is floored at tx_min = 26 before it gets
-    // here, so entries below 26 are unreachable and mirror v = 26 to stay in 12 bits.
-    // Cost: one LUTRAM read + one DSP48 per channel, and 1 extra cycle of latency
-    // (absorbed internally - src and tx enter this module already aligned).
+    // 用倒数表代替组合逻辑的 18/8 除法。原来的除法器在
+    // 148.5 MHz 下、6.734 ns 的周期里需要约 32 ns,而且是实现(implementation)中
+    // 最糟糕的失败路径 (value_tem_r_reg[*] -> post_img_*_reg[*])。
+    // recip[v] = round(2^16 / v);tx_value 在到达这里之前已被钳到下限 tx_min = 26,
+    // 所以 26 以下的表项不可达,它们镜像 v = 26 以保持在 12 位以内。
+    // 代价:每通道一次 LUTRAM 读 + 一个 DSP48,以及 1 个额外周期延迟
+    // (在模块内部被吸收 —— src 和 tx 进入本模块时已经对齐)。
     reg     [11 : 0]    recip_rom   [0:255];
     integer             ri;
     initial begin
@@ -169,14 +169,14 @@ end
     reg                     pre_tx_frame_href_d3    ;
     reg                     pre_tx_frame_clken_d3   ;
 
-    // reciprocal lookup, registered so the LUTRAM read stays off the multiply path
+    // 查倒数表并打一拍寄存,使 LUTRAM 读不落在乘法路径上
     always@(posedge clk or negedge rst_n)begin
         if(!rst_n)  recip_r <=  12'd0;
         else        recip_r <=  recip_rom[tx_value_d1];
     end
 
-    // value_tem is signed 18-bit (|v| <= 130305) and recip is 12-bit (<= 2521), so the
-    // product is < 2^29 and fits signed 30 bits. One DSP48 per channel.
+    // value_tem 是带符号 18 位(|v| <= 130305),recip 是 12 位(<= 2521),所以
+    // 乘积 < 2^29,可用带符号 30 位容纳。每通道一个 DSP48。
     always@(posedge clk or negedge rst_n)begin
         if(!rst_n)begin
             prod_r  <=  30'sd0;
@@ -190,9 +190,9 @@ end
         end
     end
 
-    // Signed quotient of the restore division J = value_tem / tx, scaled back by 2^16
-    // with round-to-nearest. Kept signed so a negative result (pixel darker than A) is
-    // detectable and saturated before use.
+    // 还原除法 J = value_tem / tx 的带符号商,再按 2^16
+    // 缩放回去,采用四舍五入。保持带符号,以便负结果(像素比 A 更暗)
+    // 可在使用前被检出并做饱和。
     wire signed [29 : 0]    qsum_r  =   prod_r + 30'sd32768;
     wire signed [29 : 0]    qsum_g  =   prod_g + 30'sd32768;
     wire signed [29 : 0]    qsum_b  =   prod_b + 30'sd32768;
@@ -200,8 +200,8 @@ end
     wire signed [17 : 0]    q_g     =   qsum_g >>> 16;
     wire signed [17 : 0]    q_b     =   qsum_b >>> 16;
 
-    // Saturate the restore result into [0, 255]; tx is bounded below (>= tx_min),
-    // so q is finite. q_r[17] is the sign bit -> clamp negatives to 0.
+    // 把还原结果饱和到 [0, 255];tx 有下限(>= tx_min),
+    // 所以 q 是有限的。q_r[17] 是符号位 -> 负数钳到 0。
     always@(posedge clk or negedge rst_n)begin
         if(!rst_n)begin
             post_img_r      <=  8'd0;

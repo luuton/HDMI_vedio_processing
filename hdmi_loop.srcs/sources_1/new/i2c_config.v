@@ -112,16 +112,16 @@ i2c_master_top i2c_master_top_m0
 	.rst(rst),
 	.clk(clk),
 	
-	// I2C signals
-	// i2c clock line
-	.scl_pad_i(scl_pad_i),       // SCL-line input
-	.scl_pad_o(scl_pad_o),       // SCL-line output (always 1'b0)
-	.scl_padoen_o(scl_padoen_o),    // SCL-line output enable (active low)
+	// I2C 信号
+	// I2C 时钟线
+	.scl_pad_i(scl_pad_i),       // SCL 线输入
+	.scl_pad_o(scl_pad_o),       // SCL 线输出(恒为 1'b0)
+	.scl_padoen_o(scl_padoen_o),    // SCL 线输出使能(低有效)
 
-	// i2c data line
-	.sda_pad_i(sda_pad_i),       // SDA-line input
-	.sda_pad_o(sda_pad_o),       // SDA-line output (always 1'b0)
-	.sda_padoen_o(sda_padoen_o),    // SDA-line output enable (active low)
+	// I2C 数据线
+	.sda_pad_i(sda_pad_i),       // SDA 线输入
+	.sda_pad_o(sda_pad_o),       // SDA 线输出(恒为 1'b0)
+	.sda_padoen_o(sda_padoen_o),    // SDA 线输出使能(低有效)
 	
 	.i2c_read_req(i2c_read_req),
 	.i2c_read_req_ack(i2c_read_req_ack),

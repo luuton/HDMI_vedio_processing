@@ -40,10 +40,10 @@ always@(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         A_value <=  0;
     end
-    // Estimate A per frame: clear the accumulator on the falling vsync edge (as soon
-    // as the previous frame's pixels are done), then re-accumulate the channel max
-    // over the current frame only. Without this reset A_value drifts toward the
-    // all-time global maximum, so scene changes never get a fresh atmospheric light.
+    // 每帧估计 A:在 vsync 下降沿清空累加器(上一帧
+    // 像素一处理完就清),然后只在当前帧上
+    // 重新累加通道最大值。没有这个复位,A_value 会漂向
+    // 历史全局最大值,场景切换时就永远得不到新的大气光估计。
     else if(pre_frame_vsync_d1 & !pre_frame_vsync) begin
         A_value <=  0;
     end
@@ -71,8 +71,8 @@ always@(posedge clk or negedge rst_n)begin
         A_value_out <=  8'd230;
     end
     else if(pre_frame_vsync_d1 & !pre_frame_vsync)begin
-        // Floor of 1 guards against A = 0 (an all-black frame), which would make
-        // downstream divisions by A divide by zero and corrupt the whole frame.
+        // 下限 1 用于防止 A = 0(全黑帧),那会让
+        // 下游以 A 为除数的除法除零,从而毁掉整帧。
         A_value_out <=  (A_value > 8'd1) ? A_value : 8'd1;
     end
 end

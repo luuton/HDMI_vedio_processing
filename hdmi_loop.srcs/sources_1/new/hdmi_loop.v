@@ -7,8 +7,8 @@ module hdmi_loop
 	input  sys_clk_n,
 	inout hdmi_scl,
 	inout hdmi_sda,
-    output hdmi_nreset_v10,//HDMI reset compatibility for version 1.0 and 1.1
-    output hdmi_nreset,  //HDMI reset compatibility for version 1.0 and 1.1
+    output hdmi_nreset_v10,//兼容 HDMI 1.0 和 1.1 版本的复位
+    output hdmi_nreset,  //兼容 HDMI 1.0 和 1.1 版本的复位
 	output hdmi_in_nreset,
 	input vin_clk,
 	input vin_hs,
@@ -22,7 +22,7 @@ module hdmi_loop
 	output vout_de,
 	output[23:0] vout_data,
 
-	// ---- RGMII PHY (video over Ethernet, parallel output channel) ----
+	// ---- RGMII PHY(以太网视频传输,并行输出通道) ----
 	output [3:0] rgmii_txd,
 	output       rgmii_txctl,
 	output       rgmii_txc,
@@ -50,27 +50,27 @@ IBUFG video_clock
 );
 
 // ---------------------------------------------------------------------------
-// 200 MHz clock buffering
+// 200 MHz 时钟缓冲
 //
-// The IDELAYCTRL that calibrates the RGMII input delay taps needs a 200 MHz
-// reference, and the only one on the board is this same differential pin pair.
+// 校准 RGMII 输入延迟抽头的 IDELAYCTRL 需要 200 MHz
+// 参考时钟,而板上唯一的来源正是这一对差分引脚。
 //
-// sys_pll used to instantiate its own IBUFDS internally (PRIM_SOURCE =
-// Differential_clock_capable_pin). Hanging a second IBUFDS on sys_clk_p/n is
-// illegal -- one clock-capable pin pair may drive exactly one input buffer, and
-// Vivado fails at the IO placer with
+// sys_pll 原本在内部自己实例化 IBUFDS(PRIM_SOURCE =
+// Differential_clock_capable_pin)。在同一对 sys_clk_p/n 上再挂第二个 IBUFDS 是
+// 不合法的 —— 一对时钟可用(clock-capable)引脚只能驱动一个输入缓冲,而
+// Vivado 会在 IO placer 阶段报错:
 //     [Place 30-602] IO port 'sys_clk_p' is driving multiple buffers
-// with no XDC property able to override it.
+// 且没有任何 XDC 属性可以覆盖它。
 //
-// So the buffer is built here once and sys_pll is switched to
-// PRIM_SOURCE = No_buffer (see tools/setup_eth_ip.tcl), taking clk_in1 directly
-// from the BUFG output. Regenerating sys_pll with that setting is mandatory --
-// until it is done the instance below will not elaborate, because the generated
-// wrapper still exposes clk_in1_p / clk_in1_n instead of clk_in1.
+// 所以这里只构建一次缓冲,并把 sys_pll 改为
+// PRIM_SOURCE = No_buffer(见 tools/setup_eth_ip.tcl),让 clk_in1 直接
+// 取自 BUFG 输出。必须用该设置重新生成 sys_pll ——
+// 在完成之前,下面的实例无法 elaborate,因为生成的
+// wrapper 仍然暴露 clk_in1_p / clk_in1_n 而不是 clk_in1。
 //
-// It is not possible to dodge this by deriving 200 MHz from sys_pll itself: the
-// MMCM VCO is 742.5 MHz and 742.5/200 is not an integer, nor do 27/148.5/200
-// have a common multiple that fits under the MMCM limit.
+// 也不能通过从 sys_pll 自身分频出 200 MHz 来规避这个问题:
+// MMCM 的 VCO 是 742.5 MHz,742.5/200 不是整数,而 27/148.5/200
+// 也不存在落在 MMCM 限制以下的公倍数。
 // ---------------------------------------------------------------------------
 wire sys_clk_ibuf;
 wire sys_clk_200m;
@@ -88,12 +88,12 @@ BUFG u_sys_clk_bufg (
 
 sys_pll sys_pll_i
  (
-	// Clock in ports -- already buffered above
+	// 时钟输入端口 -- 已在上面缓冲
 	.clk_in1(sys_clk_200m),
-	// Clock out ports
+	// 时钟输出端口
 	.clk_out1(clk_27m),
 	.clk_out2(),
-	// Status and control signals
+	// 状态与控制信号
 	.reset(1'b0),
 	.locked(locked)
  );
@@ -108,28 +108,28 @@ i2c_config i2c_config_m0(
 	.i2c_sda(hdmi_sda)
 );
 
-// Dehaze output bus (driven by u_haze_removal_top). mode_cur selects between it and
-// the direct bypass bus below.
+// 去雾输出总线(由 u_haze_removal_top 驱动)。mode_cur 在它与
+// 下面的直通旁路总线之间做选择。
 wire        haze_vs   ;
 wire        haze_hs   ;
 wire        haze_de   ;
 wire [23:0] haze_data ;
 
-// ---- key_in[0] mode select: dehaze (default) <-> direct bypass ----
-// key_in[0] is active low; one debounced press toggles the mode. The new mode is
-// applied on the falling edge of vsync (frame boundary) so a frame is never shown
-// half direct / half dehazed.
+// ---- key_in[0] 模式选择:去雾(默认) <-> 直通旁路 ----
+// key_in[0] 低电平有效;一次消抖后的按下翻转模式。新模式在
+// vsync 下降沿(场边界)生效,因此一帧画面绝不会出现
+// 一半直通、一半去雾的情况。
 integer k;
-reg          vin_vs_d[1:0];   // 2-cycle delay of raw video for the bypass path
+reg          vin_vs_d[1:0];   // 旁路通路使用的原始视频 2 拍延迟
 reg          vin_hs_d[1:0];
 reg          vin_de_d[1:0];
 reg  [23:0]  vin_data_d[1:0];
 
-reg          key_r0, key_r1;      // 2-FF synchronizer into sys_vin_clk
-reg          key_db, key_db_prev; // debounced level and its previous value
+reg          key_r0, key_r1;      // 同步到 sys_vin_clk 的 2 级触发器
+reg          key_db, key_db_prev; // 消抖后的电平及其前一拍的值
 reg  [21:0]  key_cnt;
-reg          mode_next, mode_cur; // requested mode (toggle) / applied mode
-localparam   KEY_STABLE = 22'd2_200_000; // ~14.8 ms debounce @ 148.5 MHz
+reg          mode_next, mode_cur; // 请求的模式(翻转)/ 已生效的模式
+localparam   KEY_STABLE = 22'd2_200_000; // 在 148.5 MHz 下约 14.8 ms 消抖
 
 always @(posedge sys_vin_clk or negedge locked) begin
     if(!locked) begin
@@ -159,13 +159,13 @@ always @(posedge sys_vin_clk or negedge locked) begin
         key_db      <= 1'b1;
         key_db_prev <= 1'b1;
         key_cnt     <= 22'd0;
-        mode_next   <= 1'b0; // 0 = dehaze
+        mode_next   <= 1'b0; // 0 = 去雾
         mode_cur    <= 1'b0;
     end
     else begin
         key_r0 <= key_in[0];
-        key_r1 <= key_r0;                        // synchronize to sys_vin_clk
-        // debounce: accept a change only when it stays stable for KEY_STABLE clocks
+        key_r1 <= key_r0;                        // 同步到 sys_vin_clk
+        // 消抖:只有电平保持 KEY_STABLE 个时钟不变时才接受变化
         if(key_r1 != key_db) begin
             if(key_cnt >= KEY_STABLE) begin
                 key_db  <= key_r1;
@@ -176,32 +176,32 @@ always @(posedge sys_vin_clk or negedge locked) begin
         else key_cnt <= 22'd0;
         key_db_prev <= key_db;
 
-        // key_db falling edge (press) toggles the requested mode
+        // key_db 下降沿(按下)翻转请求的模式
         if(key_db_prev & ~key_db) mode_next <= ~mode_next;
-        // apply at frame boundary only
+        // 仅在帧边界生效
         if(vin_vs_d[0] & ~vin_vs) mode_cur  <= mode_next;
     end
 end
 
-// ---- key_in[2] push enable: debounced toggle, default ON ----
-// Same 2-FF + KEY_STABLE debounce as key_in[0], but toggling a level instead of
-// a mode.
+// ---- key_in[2] 推送使能:消抖翻转,默认开启 ----
+// 与 key_in[0] 相同的 2 级触发器 + KEY_STABLE 消抖,但翻转的是电平
+// 而不是模式。
 //
-// push_db_p is deliberately initialised to 1'b0 although the button is released
-// at power-up (key_in[2] low-active, so released reads 1). The debouncer then
-// sees a 0->1 change and settles to 1, which is a *rising* edge -- and only a
-// falling edge toggles. Starting it at 1'b1 instead would make the power-up
-// settle indistinguishable from a press and disable pushing on the first boot.
+// push_db_p 被刻意初始化为 1'b0,尽管上电时按键处于释放状态
+// (key_in[2] 低电平有效,所以释放时读到的是 1)。这样消抖器会
+// 看到一次 0->1 变化并稳定到 1,那是一个*上升*沿 —— 而只有
+// 下降沿才会翻转。若改为从 1'b1 开始,上电后的稳定过程就会与
+// 一次按下无法区分,从而在首次启动时禁止推送。
 //
-// push_en is applied at the frame boundary for the same reason mode_cur is: it
-// gates only the FIFO write enable, so changing it mid-frame would leave a
-// partial frame in the FIFO whose first byte is not the frame's first pixel.
-// Applying it while vsync is active means video_to_eth always resumes on a line
-// boundary of the new frame.
+// push_en 与 mode_cur 同理在帧边界生效:它只
+// 门控 FIFO 写使能,因此在一帧中途改变它会让 FIFO 里留下
+// 半个帧,且其首字节并不是该帧的第一个像素。
+// 在 vsync 有效期间生效,意味着 video_to_eth 总是在新帧的
+// 行边界上恢复。
 //
-// push_en gates the write enable only. It must NOT gate the FIFO reset or the
-// line counters: doing so would strand stale bytes in the FIFO across a disable
-// window and let mac_test see a half-empty frame.
+// push_en 只门控写使能。它绝不能门控 FIFO 复位或
+// 行计数器:否则会在禁用期间把陈旧字节滞留在 FIFO 中,
+// 并让 mac_test 看到一个半空的帧。
 reg          push_r0, push_r1;
 reg          push_db_p, push_db_p_prev;
 reg  [21:0]  push_cnt;
@@ -215,11 +215,11 @@ always @(posedge sys_vin_clk or negedge locked) begin
         push_db_p_prev <= 1'b0;
         push_cnt       <= 22'd0;
         push_req       <= 1'b1;
-        push_en        <= 1'b1;   // default on
+        push_en        <= 1'b1;   // 默认开启
     end
     else begin
         push_r0 <= key_in[2];
-        push_r1 <= push_r0;                      // synchronize to sys_vin_clk
+        push_r1 <= push_r0;                      // 同步到 sys_vin_clk
         if(push_r1 != push_db_p) begin
             if(push_cnt >= KEY_STABLE) begin
                 push_db_p <= push_r1;
@@ -235,9 +235,32 @@ always @(posedge sys_vin_clk or negedge locked) begin
     end
 end
 
+// pre_frame_href 接的是 SiI9013 的 HSYNC 引脚(N18),它是水平消隐期内
+// 的一个窄脉冲 —— 而不是行有效电平。它过去还被当作去雾链的
+// 行门控,这让整条链形同虚设:在 1080p60(H 极性为正)下,
+// 它在全部 1920 个有效像素期间都是低,于是 3x3 窗口被强制置零,
+// 暗通道读到 0,t 饱和到 255,J 与 I 之差在
+// 1 LSB 以内。现在 haze_removal_top 在内部用 clken 门控其数据通路,
+// 这个输入只用来定位输出 HSYNC 脉冲的位置 —— 所以这里接
+// HSYNC 脉冲是正确的。参见 haze_removal_top.v 中的 href_line 注释,以及
+// tools/tb_haze_removal_top.v 中的复现用例。
 haze_removal_top #(
-    .Y_ENHANCE_ENABLE (0    ), // 1 = enable Y-channel +50 brightness enhancement
-    .PIC_WIDTH        (1920 ) // pixels per line, must equal active video width
+    // 必须保持 0。Y_ENHANCE_ENABLE=1 分支是休眠且无人维护的分支:
+    // 它把 Cb 接到 YCbCr2RGB 的 i_cr_data、把 Cr 接到 i_cb_data(Cb/Cr 接反),
+    // 通过 8 位端口给 Y 加 50,于是 Y > 205 会回绕成接近全黑,还把
+    // o_red/o_blue 落在 post_img[0+:8]/[16+:8] —— 这与设计的其余部分
+    // 以及 video_to_eth 的字节序正好相反。readme.md 已经把这三条列在
+    // "休眠分支未启用且未维护".
+    //
+    // 本工作区中它曾被短暂设为 1(HEAD 是 0,tools/tb_haze_removal_top.v
+    // 驱动 0,已烧写的比特流也是 0 —— 来自 tools/out.avi_20260921_212043.311.jpg 的抓图
+    // 与 Y_ENHANCE_ENABLE=0 的模型吻合到 3.9 LSB/plane,而正向渲染
+    // =1 链路则偏差 48 LSB/plane)。若留在 1,下一次综合会悄悄变成
+    // 这条已损坏的分支。
+    .Y_ENHANCE_ENABLE (0    ),
+    .PIC_WIDTH        (1920 ),// 每行像素数,必须等于有效视频宽度
+    .WINDOW_PASSES    (3    ),// 暗通道 = 7x7(3 级级联的 3x3 运算)
+    .MODIFICATION_VALUE(16'd218)// omega = 0.85;243 = 0.95 是 He 等人更暗的设置
 ) u_haze_removal_top(
     .clk               (sys_vin_clk ),
     .rst_n             (locked      ),
@@ -251,11 +274,11 @@ haze_removal_top #(
     .post_img          (haze_data   )
 );
 
-// mode_cur = 0 -> dehaze (default); 1 -> direct bypass of the raw input.
-// Held in internal wires rather than assigned straight to the ports so the
-// Ethernet channel taps exactly the picture the HDMI output is showing --
-// switching modes switches both outputs together, with no second mux to keep in
-// sync.
+// mode_cur = 0 -> 去雾(默认);1 -> 原始输入直接旁路。
+// 之所以先放在内部 wire 上而不是直接赋给端口,是为了让
+// 以太网通道取到的画面与 HDMI 输出显示的完全一致 ——
+// 切换模式时两路输出同步切换,不需要第二个多路选择器来维持
+// 同步。
 wire        vout_vs_int  ;
 wire        vout_hs_int  ;
 wire        vout_de_int  ;
@@ -272,14 +295,14 @@ assign vout_de       = vout_de_int  ;
 assign vout_data     = vout_data_int;
 
 // ---------------------------------------------------------------------------
-// Video over Ethernet -- parallel output channel
+// 以太网视频传输 -- 并行输出通道
 //
-// 1080p60 RGB888 is decimated to 960x540 RGB565 (1,036,800 bytes/frame at 60 Hz
-// = 62.2 MB/s, comfortably under the ~118 MB/s a gigabit link carries) and
-// pushed out of the same RGMII PHY as UDP packets to 192.168.0.3:8080.
+// 1080p60 RGB888 被降采样为 960x540 RGB565(60 Hz 下每帧 1,036,800 字节
+// = 62.2 MB/s,明显低于千兆链路承载的约 118 MB/s),并以
+// UDP 包的形式从同一个 RGMII PHY 发往 192.168.0.3:8080。
 //
-// Nothing here is in the HDMI path: vout_* above is unaffected by whether
-// pushing is enabled, whether the link is up, or whether the FIFO is full.
+// 这里没有任何东西位于 HDMI 通路上:上面的 vout_* 不受
+// 推送是否使能、链路是否连通、FIFO 是否写满的影响。
 // ---------------------------------------------------------------------------
 wire        eth_wr_en       ;
 wire [7:0]  eth_data        ;
@@ -293,7 +316,7 @@ wire        eth_fifo_wr_ready;
 video_to_eth #(
     .H_ACTIVE_PIX  (1920      ),
     .V_ACTIVE_LINE (1080      ),
-    .GAP_FRAME     (11'd1000  ), // de-low clocks that mean "in vertical blanking"
+    .GAP_FRAME     (11'd1000  ), // 表示“处于垂直消隐期”的 de 低电平时钟数
     .HREF_HOLD     (4'd8      )
 ) u_video_to_eth (
     .clk          (sys_vin_clk      ),
@@ -311,14 +334,14 @@ video_to_eth #(
     .kept_lines   (eth_kept_lines   )
 );
 
-// Debug taps on eth_line_pix_cnt / eth_line_idx / eth_kept_lines and on the
-// eth_video_tx *_dbg outputs are intentionally left unconnected: there are no
-// spare package pins, and Vivado trims these nets. To watch them on the board,
-// add an ILA in the GUI and probe the internal nets by name.
+// 对 eth_line_pix_cnt / eth_line_idx / eth_kept_lines 以及
+// eth_video_tx 的 *_dbg 输出的调试抽头被刻意留为不连接:板上没有
+// 多余的封装引脚,Vivado 也会裁剪这些网络。要在板上观察它们,
+// 请在 GUI 中添加 ILA,并按名称探测这些内部网络。
 eth_video_tx #(
-    // 540 x 1920 = 1,036,800 = 1350 x 768 exactly, so a frame is a whole number
-    // of packets and the frame-boundary FIFO reset discards nothing. See the
-    // parameter comment in eth_video_tx.v before changing this.
+    // 540 x 1920 = 1,036,800 = 1350 x 768,正好整除,所以一帧是整数个
+    // 包,帧边界处的 FIFO 复位不会丢弃任何数据。改动前请先看
+    // eth_video_tx.v 中的参数注释。
     .UDP_SEND_LEN (16'd768)
 ) u_eth_video_tx (
     .clk_200m          (sys_clk_200m      ),

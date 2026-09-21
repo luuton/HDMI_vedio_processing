@@ -25,20 +25,20 @@ module  matrix_generate_3x3#(
     output reg [DATA_WIDTH - 1 :0]  matrix_p33
 );
 
-//wire define
+//wire å®šä¹‰
 wire    [DATA_WIDTH - 1 : 0]    row1_data;  
 wire    [DATA_WIDTH - 1 : 0]    row2_data;  
 wire    [DATA_WIDTH - 1 : 0]    row3_data;  
 wire                            read_frame_href;
 wire                            read_frame_clken;
 
-//reg define
+//reg å®šä¹‰
 reg     [1:0]                   pre_frame_vsync_r;
 reg     [1:0]                   pre_frame_href_r;
 reg     [1:0]                   pre_frame_clken_r;
 
 //*****************************************************
-//**                    main code
+//**                    ä¸»ä»£ç 
 //*****************************************************
 
 assign read_frame_href    = pre_frame_href_r[0] ;
@@ -61,7 +61,7 @@ one_column_ram #(
     .taps2x     (row1_data)
 );
 
-//½«Í¬²½ĞÅºÅÑÓ³ÙÁ½ÅÄ£¬ÓÃÓÚÍ¬²½»¯´¦Àí
+//å°†åŒæ­¥ä¿¡å·å»¶è¿Ÿä¸¤æ‹ï¼Œç”¨äºåŒæ­¥åŒ–å¤„ç†
 always@(posedge clk or negedge rst_n) begin
     if(!rst_n) begin
         pre_frame_vsync_r <= 0;
@@ -75,7 +75,7 @@ always@(posedge clk or negedge rst_n) begin
     end
 end
 
-//ÔÚÍ¬²½´¦ÀíºóµÄ¿ØÖÆĞÅºÅÏÂ£¬Êä³öÍ¼Ïñ¾ØÕó
+//åœ¨åŒæ­¥å¤„ç†åçš„æ§åˆ¶ä¿¡å·ä¸‹ï¼Œè¾“å‡ºå›¾åƒçŸ©é˜µ
 always@(posedge clk or negedge rst_n) begin
     if(!rst_n) begin
         {matrix_p11, matrix_p12, matrix_p13} <= 24'h0;

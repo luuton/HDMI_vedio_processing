@@ -11,3 +11,39 @@ hdmi_loop.srcs/utils_1/
 09.HDMI测试实验.pdf
 vivado.jou
 vivado.log
+
+# ---- xsim 命令行仿真的产物 ----
+# xsim.dir 是快照(xelab -s 的输出),可达数十 MB;*.jou / *.log 里还带时间戳备份副本,
+# 例如 xsim_23712.backup.jou。全部可再生,不入库。
+xsim.dir/
+xsim*.jou
+xsim*.log
+xvlog.*
+xelab.*
+xsc.*
+*.pb
+webtalk*.jou
+webtalk*.log
+
+# ---- 波形与硬件调试产物 ----
+*.wdb
+*.wcfg
+*.str
+
+# ---- tools/ 下的录制与渲染产物 ----
+# out.avi 是上位机录下的原始视频(数百 MB 量级),不入库。
+# 单帧抓图命名成 out.avi_<时间戳>.jpg,只有几十 KB,而且是 readme.md 里实测结论的
+# 原始依据,要保留入库,所以这里只忽略视频容器本身,不用 out.avi* 通配。
+# 注意:readme.md 引用的 tools/out.avi_20260921_212043.311.jpg 当前不在磁盘上
+#       (本次核对时确认缺失,且不在 git 历史里)。
+tools/out.avi
+tools/out.mp4
+# 分析用渲染图(反解源图 / A/B 对比),可重跑得到,不入库
+tools/*.png
+
+# ---- 临时调试输出 ----
+# de.txt / hs.txt 是早先 HREF_MODE=de|hs 两次 A/B 的 xsim 控制台重定向留档,
+# 编码是 GBK 且结果已写入 readme.md,属于可再生的中间产物。
+de.txt
+hs.txt
+*.tmp

@@ -4,16 +4,16 @@ module fifo_ram#(
 )
 (
     input                               clk,
-    //write port
+    //写端口
     input                               wr_en,
     input       [DATA_WIDTH - 1 : 0]    wr_data,
     output                              wr_full,
-    //read port
+    //读端口
     input                               rd_en,
     output reg  [DATA_WIDTH - 1 : 0]    rd_data,
     output                              rd_empty
 );
-    //define ram
+    //定义 ram
     (*ram_style = "block" *) reg [DATA_WIDTH - 1 : 0] fifo_buffer[DATA_DEPTH - 1 : 0];
 
     integer i;
@@ -23,11 +23,11 @@ module fifo_ram#(
         end
     end
 
-    reg     [$clog2(DATA_DEPTH) - 1 : 0]    wr_pointer = 0;//form end to read data
+    reg     [$clog2(DATA_DEPTH) - 1 : 0]    wr_pointer = 0;//从此端读出数据
     reg     [$clog2(DATA_DEPTH) - 1 : 0]    rd_pointer = 0;
     wire    [DATA_WIDTH - 1 : 0]            rd_data_out;
 
-//keep track of the write  pointer
+//跟踪写指针
 always @(posedge clk) begin
     if (wr_en) begin
         if (wr_pointer == DATA_DEPTH - 1) begin
@@ -39,7 +39,7 @@ always @(posedge clk) begin
     end
 end
 
-//keep track of the read pointer 
+//跟踪读指针 
 always @(posedge clk) begin
     if (rd_en) begin
         if (rd_pointer == DATA_DEPTH - 1) begin
@@ -51,7 +51,7 @@ always @(posedge clk) begin
     end
 end
 
-//write data into fifo when wr_en is asserted
+//wr_en 有效时把数据写入 fifo
 always @(posedge clk) begin
     if (wr_en) begin
         fifo_buffer[wr_pointer] <= wr_data;
@@ -61,7 +61,7 @@ end
 assign rd_data_out = rd_en ? fifo_buffer[rd_pointer] : 0;
     
 always @(posedge clk) begin
-    rd_data <=  rd_data_out;//�ӳ�һ��
+    rd_data <=  rd_data_out;//延迟一拍
 end
 
 

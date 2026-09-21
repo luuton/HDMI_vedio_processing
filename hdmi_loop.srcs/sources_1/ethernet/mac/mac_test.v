@@ -15,7 +15,7 @@ module mac_test
  input [15:0]         udp_send_data_length, 
  input [7:0]          fifo_data,                //FIFO中的数据
  input [11:0]         fifo_data_count,		  //FIFO中的数据数量
- output reg              fifo_rd_en,            //FIFO读使�? 
+ output reg              fifo_rd_en,            //FIFO读使能
  
  input                gmii_tx_clk ,
  input                gmii_rx_clk ,
@@ -88,7 +88,7 @@ begin
   begin
   case(state)
   IDLE        :  begin
-                   if (wait_cnt == 32'd1250000 )  //wait for 10ms
+                   if (wait_cnt == 32'd1250000 )  //等待 10ms
 						   state <= ARP_REQ ;
 						 else
 						   state <= IDLE ;
@@ -196,7 +196,7 @@ mac_top mac_top0
  .gmii_rx_clk                 (gmii_rx_clk)                  ,
  .rst_n                       (rst_n)  ,
 
- .source_mac_addr             (48'h00_0a_35_01_fe_c0)   ,       //source mac address 
+ .source_mac_addr             (48'h00_0a_35_01_fe_c0)   ,       //源 MAC 地址 
  .identify_code               (identify_code_d0              ), 
  .TTL                         (8'h80),
  .source_ip_addr              (32'hc0a80002),

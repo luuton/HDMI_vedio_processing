@@ -1,10 +1,10 @@
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
-#############SPI Configurate Setting##################
+#############SPI 配置设置#############################
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design] 
 set_property CONFIG_MODE SPIx4 [current_design] 
 set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design] 
-############## clock define##################
+############## 时钟定义######################
 create_clock -period 5 [get_ports sys_clk_p]
 set_property PACKAGE_PIN R4 [get_ports sys_clk_p]
 set_property IOSTANDARD DIFF_SSTL15 [get_ports sys_clk_p]
@@ -106,7 +106,7 @@ set_property DRIVE 16 [get_ports vout_clk]
 set_property DRIVE 12 [get_ports vout_de]
 set_property DRIVE 12 [get_ports vout_hs]
 
-############## key define#################################
+############## 按键定义###################################
 set_property PACKAGE_PIN L19 [get_ports {key_in[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {key_in[0]}]
 
@@ -121,15 +121,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports {key_in[3]}]
 create_clock -period 6.734 -name vin_clk -waveform {0.000 3.367} [get_ports vin_clk]
 
 ###############################################################################
-# Video over Ethernet -- RGMII PHY
+# 以太网视频传输 -- RGMII PHY
 #
-# Pinout copied from 26_video_ethernet/auto_create_project/src/constraints/top.xdc
-# and checked pin-by-pin against everything above: no conflicts.
+# 引脚分配复制自 26_video_ethernet/auto_create_project/src/constraints/top.xdc
+# 并已与上面的所有内容逐引脚核对:无冲突。
 #
-# NOTE: no `IOB TRUE` here, deliberately. Unlike the vout_* parallel RGB bus,
-# the RGMII pins are driven/received through ODDR/IDDR primitives, which already
-# specify the IOLOGIC site. Adding IOB TRUE on top makes the placer reject the
-# ODDR/IDDR placement.
+# 注意:这里刻意不做 `IOB TRUE`。与 vout_* 并行 RGB 总线不同,
+# RGMII 引脚是通过 ODDR/IDDR 原语驱动/接收的,而这些原语已经
+# 指定了 IOLOGIC 位置。在其之上再加 IOB TRUE 会让布局器拒绝
+# ODDR/IDDR 的布局。
 ###############################################################################
 create_clock -period 8.000 -name rgmii_rxc [get_ports rgmii_rxc]
 
@@ -159,48 +159,48 @@ set_property IOSTANDARD LVCMOS33 [get_ports e_reset]
 set_property IOSTANDARD LVCMOS33 [get_ports e_mdc]
 set_property IOSTANDARD LVCMOS33 [get_ports e_mdio]
 
-# SLEW FAST on the transmit side only. The receive pins are inputs; SLEW has no
-# meaning there and setting it produces a spurious critical warning.
+# 只在发送侧使用 SLEW FAST。接收引脚是输入,SLEW
+# 在那里没有意义,设置它会产生一条虚假的 critical warning。
 set_property SLEW FAST [get_ports rgmii_txc]
 set_property SLEW FAST [get_ports rgmii_txctl]
 set_property SLEW FAST [get_ports {rgmii_txd[*]}]
 
-# MDIO is never driven (e_mdio is parked at 1'bz). Without a board pull-up the
-# pin would float, so enable the internal one.
+# MDIO 从不被驱动(e_mdio 被置为 1'bz)。板上没有上拉电阻时
+# 该引脚会浮空,所以启用内部上拉。
 set_property PULLUP TRUE [get_ports e_mdio]
 
-# The reference design shipped these pins unconstrained, which is exactly where
-# the timing budget actually lives:
-#   - RX goes through a FIXED IDELAY of 30 taps (2.34 ns at the 200 MHz REFCLK,
-#     ~78 ps/tap). Fixed, not VAR_LOAD/auto-calibrated, so it does not adapt.
-#     2.34 ns centres the sampling point in RGMII's 4 ns DDR data eye, so the
-#     PHY is assumed to source rxd/rxctl edge-aligned with rxc (its own internal
-#     RGMII RX delay off) and the FPGA supplies the whole shift.
-#   - TX is edge-aligned: util_gmii_to_rgmii regenerates rgmii_txc from the same
-#     clock that launches the data (ODDR, SAME_EDGE), with no phase shift. So
-#     txd/txctl and txc leave together and the PHY must sample with its internal
-#     RGMII TX delay, or the board must have matched the trace lengths.
+# 参考设计发布时这些引脚未加约束,而时序预算恰恰就
+# 落在这些引脚上:
+#   - RX 经过 30 抽头的 FIXED IDELAY(在 200 MHz REFCLK 下为 2.34 ns,
+#     ~78 ps/抽头)。是 Fixed 而非 VAR_LOAD/自动校准,因此不自适应。
+#     2.34 ns 把采样点对准 RGMII 4 ns DDR 数据眼图的中心,所以
+#     假定 PHY 输出的 rxd/rxctl 与 rxc 边沿对齐(其内部
+#     RGMII RX 延迟关闭),整个偏移由 FPGA 提供。
+#   - TX 是边沿对齐的:util_gmii_to_rgmii 用与发送数据相同的
+#     时钟(ODDR,SAME_EDGE)重新生成 rgmii_txc,不做相移。因此
+#     txd/txctl 与 txc 一起发出,PHY 必须用其内部
+#     RGMII TX 延迟采样,或者板上走线长度必须匹配。
 #
-# The numbers below model board/PLL skew, not silicon requirements -- they are
-# deliberately loose. If the PHY datasheet gives real setup/hold values, replace
-# them; do not tighten them to "make timing pass".
+# 下面的数字是在建模板级/PLL 偏斜,而不是硅片要求 —— 它们
+# 是故意放松的。如果 PHY 数据手册给出了真实的 setup/hold 值,请替换
+# 掉它们;不要为了“让时序通过”而收紧这些数字。
 set_input_delay  -clock [get_clocks rgmii_rxc] -max  1.0 -min  0.0 \
     [get_ports {rgmii_rxd[*] rgmii_rxctl}]
 
-# rgmii_txc is regenerated in the fabric, so it needs its own generated clock to
-# be a meaningful reference for txd/txctl -- otherwise the output ports have no
-# launch clock and go unconstrained.
+# rgmii_txc 是在 fabric 内重新生成的,所以它需要自己的生成时钟,才能
+# 成为 txd/txctl 的有意义参考 —— 否则这些输出端口没有
+# 发起时钟,处于未约束状态。
 create_generated_clock -name rgmii_txc_out -source [get_ports rgmii_rxc] \
     -divide_by 1 [get_ports rgmii_txc]
 
 set_output_delay -clock [get_clocks rgmii_txc_out] -max  1.0 -min -1.0 \
     [get_ports {rgmii_txd[*] rgmii_txctl}]
 
-# Three clocks that are genuinely unrelated: the 200 MHz board oscillator (and
-# everything the MMCM derives from it), the 148.5 MHz HDMI input pixel clock,
-# and the 125 MHz RGMII receive clock. Without this the tools try to time the
-# paths that cross the camera_fifo, which are only made safe by the FIFO's own
-# CDC, and the reported failures bury the real ones.
+# 三个确实互不相关的时钟:200 MHz 板载晶振(以及
+# MMCM 由它派生出的所有时钟)、148.5 MHz 的 HDMI 输入像素时钟,
+# 以及 125 MHz 的 RGMII 接收时钟。没有这一条,工具会去分析
+# 跨越 camera_fifo 的路径,而这些路径只靠 FIFO 自身的
+# CDC 才安全,报出的失败会淹没真正的失败。
 set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks sys_clk_p] \
     -group [get_clocks -include_generated_clocks vin_clk] \

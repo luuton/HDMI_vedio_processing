@@ -44,8 +44,8 @@ wire [7:0]                ram_rdata ;
 reg  [5:0]                ram_data_length ;
 
 reg  [15:0]               udp_send_cnt  ;
-reg  [15:0]               udp_data_length ;      //valid data length
-reg  [15:0]               udp_total_data_length ;//data length when transfer
+reg  [15:0]               udp_data_length ;      //有效数据长度
+reg  [15:0]               udp_total_data_length ;//传输时的数据长度
 
 reg [15:0]                timeout ;
 
@@ -118,7 +118,7 @@ always @(posedge clk or negedge rst_n)
   end
   
   
-//timeout counter
+//超时计数器
 always @(posedge clk or negedge rst_n)
   begin
     if (~rst_n)
@@ -130,7 +130,7 @@ always @(posedge clk or negedge rst_n)
   end
   
   
-//timeout counter
+//超时计数器
 always @(posedge clk or negedge rst_n)
   begin
     if (~rst_n)
@@ -156,7 +156,7 @@ always @(posedge clk or negedge rst_n)
         ram_wr_data_d1 <= ram_wr_data_d0 ;
       end
   end
-//ram signal
+//RAM 信号
 
 always @(posedge clk or negedge rst_n)
   begin
@@ -190,7 +190,7 @@ always @(posedge clk or negedge rst_n)
       fifo_rd_en <= 1'b0 ;
   end
   
-//checksum counter
+//校验和计数器
 always @(posedge clk or negedge rst_n)
   begin
     if (~rst_n)
@@ -202,7 +202,7 @@ always @(posedge clk or negedge rst_n)
   end
   
   
-//generate udp and ip data length
+//生成 UDP 和 IP 数据长度
 always @(posedge clk or negedge rst_n)
   begin
     if(rst_n == 1'b0)
@@ -222,7 +222,7 @@ always @(posedge clk or negedge rst_n)
 
   
 //*****************************************************************************************//
-//send udp data
+//发送 UDP 数据
 //*****************************************************************************************//
 always @(posedge clk or negedge rst_n)
   begin
@@ -237,8 +237,8 @@ always @(posedge clk or negedge rst_n)
           16'd3   :   udp_tx_data <= udp_send_destination_port[7:0] ;
           16'd4   :   udp_tx_data <= udp_data_length[15:8] ;
           16'd5   :   udp_tx_data <= udp_data_length[7:0] ;
-          16'd6   :   udp_tx_data <= 8'h00 ;//checksum[15:8] ;
-          16'd7   :   udp_tx_data <= 8'h00 ;//checksum[7:0]  ;
+          16'd6   :   udp_tx_data <= 8'h00 ;//校验和[15:8] ;
+          16'd7   :   udp_tx_data <= 8'h00 ;//校验和[7:0]  ;
           default :
 		    begin
               if (udp_data_length < 26)

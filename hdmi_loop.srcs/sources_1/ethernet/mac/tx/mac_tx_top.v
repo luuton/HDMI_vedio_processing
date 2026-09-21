@@ -9,8 +9,8 @@ module mac_tx_top
          input                clk                    ,
          input                rst_n                  ,
          input  [15:0]        identify_code,
-         input  [47:0]        destination_mac_addr   , //destination mac address
-         input  [47:0]        source_mac_addr        ,       //source mac address
+         input  [47:0]        destination_mac_addr   , //目的 MAC 地址
+         input  [47:0]        source_mac_addr        ,       //源 MAC 地址
          input  [7:0]         TTL,
          input  [31:0]        source_ip_addr,
          input  [31:0]        destination_ip_addr,
@@ -24,7 +24,7 @@ module mac_tx_top
          input                arp_request_req,
          
          input [7:0]          fifo_data,                //FIFO中的数据
-         output               fifo_rd_en,            //FIFO读使�?
+         output               fifo_rd_en,            //FIFO读使能
          
          input  [7:0]         ram_wr_data,
          input                ram_wr_en,
@@ -137,14 +137,14 @@ arp_tx arp_tx0
          .clk                        (clk                  ) ,
          .rst_n                      (rst_n                ) ,
          
-         .destination_mac_addr       (destination_mac_addr ) , //destination mac address
-         .source_mac_addr            (source_mac_addr      ) , //source mac address
-         .source_ip_addr             (source_ip_addr       ) , //source ip address
-         .destination_ip_addr        (destination_ip_addr  ) , //destination ip address
+         .destination_mac_addr       (destination_mac_addr ) , //目的 MAC 地址
+         .source_mac_addr            (source_mac_addr      ) , //源 MAC 地址
+         .source_ip_addr             (source_ip_addr       ) , //源 IP 地址
+         .destination_ip_addr        (destination_ip_addr  ) , //目的 IP 地址
          
          .mac_data_req               (mac_data_req         ) ,
          
-         .arp_request_req            (arp_request_req         ) ,         //arp request
+         .arp_request_req            (arp_request_req         ) ,         //ARP 请求
          .arp_reply_ack              (arp_reply_ack ),
          .arp_reply_req              (arp_reply_req ),
          .arp_rec_source_ip_addr     (arp_rec_source_ip_addr ),
@@ -159,8 +159,8 @@ ip_tx ip0
       (
         .clk                          (clk                        ),
         .rst_n                        (rst_n                      ),
-        .destination_mac_addr         (destination_mac_addr       ), //destination mac address
-        .source_mac_addr              (source_mac_addr            ),       //source mac address
+        .destination_mac_addr         (destination_mac_addr       ), //目的 MAC 地址
+        .source_mac_addr              (source_mac_addr            ),       //源 MAC 地址
         .ip_send_data_length          (ip_send_data_length        ),
         .TTL                          (TTL                        ),
         .ip_send_type                 (ip_send_type               ),
