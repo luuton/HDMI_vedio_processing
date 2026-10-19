@@ -50,6 +50,7 @@ end
 reg         [15 : 0]    modify_A            ;
 reg         [11 : 0]    recip_r             ;
 reg         [27 : 0]    tx_prod_r           ;
+reg         [15 : 0]    tx_q_r              ;
 
 reg                     pre_frame_vsync_d1  ;
 reg                     pre_frame_href_d1   ;
@@ -60,6 +61,9 @@ reg                     pre_frame_clken_d2  ;
 reg                     pre_frame_vsync_d3  ;
 reg                     pre_frame_href_d3   ;
 reg                     pre_frame_clken_d3  ;
+reg                     pre_frame_vsync_d4  ;
+reg                     pre_frame_href_d4   ;
+reg                     pre_frame_clken_d4  ;
 reg         [7  : 0]    A_value_d1          ;
 
 always@(posedge clk or negedge rst_n)begin
@@ -83,6 +87,9 @@ always@(posedge clk or negedge rst_n)begin
         pre_frame_vsync_d3      <=  0                   ;
         pre_frame_href_d3       <=  0                   ;
         pre_frame_clken_d3      <=  0                   ;
+        pre_frame_vsync_d4      <=  0                   ;
+        pre_frame_href_d4       <=  0                   ;
+        pre_frame_clken_d4      <=  0                   ;
         A_value_d1              <=  0                   ;
     end
     else begin
@@ -95,6 +102,9 @@ always@(posedge clk or negedge rst_n)begin
         pre_frame_vsync_d3      <=  pre_frame_vsync_d2  ;
         pre_frame_href_d3       <=  pre_frame_href_d2   ;
         pre_frame_clken_d3      <=  pre_frame_clken_d2  ;
+        pre_frame_vsync_d4      <=  pre_frame_vsync_d3  ;
+        pre_frame_href_d4       <=  pre_frame_href_d3   ;
+        pre_frame_clken_d4      <=  pre_frame_clken_d3  ;
         A_value_d1              <=  A_value             ;
     end
 end
@@ -127,11 +137,22 @@ end
 //    而且是对场景变化最糟糕的响应:它恰好把那些估计值刚刚
 //    超出量程的像素变黑。
 //    8'd255 才是表示"不去雾"的取值。
-wire    [15 : 0]    tx_q    =   (tx_prod_r + 28'd32768) >> 16;
+//
+//    [时序] 这一级的和、饱和判断曾经全是组合逻辑,和下游
+//    calculate_A 的 a_tx = A*tx 乘法、加上跨模块布线凑成一条
+//    8.75 ns 的路径(要求 6.734 ns),是 vin_clk 域 31 个失败端点的
+//    唯一来源。现在把 (tx_prod_r + 32768) >> 16 单独打一拍,
+//    让 DSP48 输出与下游乘法不在同一周期里相遇。
+//    代价:tx 通路多 1 拍,故下面的控制信号也加到 d4,
+//    time_alignment.src_delay 里的 "+ 3" 改成 "+ 4"。
+always@(posedge clk or negedge rst_n)begin
+    if(!rst_n)  tx_q_r  <=  16'd0;
+    else        tx_q_r  <=  (tx_prod_r + 28'd32768) >> 16;
+end
 
-assign      post_frame_vsync    =   pre_frame_vsync_d3  ;
-assign      post_frame_href     =   pre_frame_href_d3   ;
-assign      post_frame_clken    =   pre_frame_clken_d3  ;
-assign      post_img            =   (tx_q > 16'd255) ? 8'd255 : (8'd255 - tx_q[7:0]);
+assign      post_frame_vsync    =   pre_frame_vsync_d4  ;
+assign      post_frame_href     =   pre_frame_href_d4   ;
+assign      post_frame_clken    =   pre_frame_clken_d4  ;
+assign      post_img            =   (tx_q_r > 16'd255) ? 8'd255 : (8'd255 - tx_q_r[7:0]);
 
 endmodule

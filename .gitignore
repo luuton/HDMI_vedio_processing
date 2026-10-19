@@ -5,9 +5,7 @@ hdmi_loop.hw/
 hdmi_loop.ip_user_files/
 hdmi_loop.sim/
 hdmi_loop.runs/
-hdmi_loop.srcs/utils_1/
 .claude/
-*.dcp
 09.HDMI测试实验.pdf
 vivado.jou
 vivado.log
@@ -42,8 +40,6 @@ tools/out.mp4
 tools/*.png
 
 # ---- 临时调试输出 ----
-# de.txt / hs.txt 是早先 HREF_MODE=de|hs 两次 A/B 的 xsim 控制台重定向留档,
-# 编码是 GBK 且结果已写入 readme.md,属于可再生的中间产物。
-de.txt
-hs.txt
+# (de.txt / hs.txt 已删除:那是早期 HREF_MODE=de|hs 两次 A/B 的 xsim 控制台重定向,
+#  GBK 编码、结论已留档在 tools/tb_haze_removal_top.v 头部第 14-17 行,属冗余。)
 *.tmp
