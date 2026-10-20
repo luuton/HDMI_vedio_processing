@@ -25,6 +25,10 @@ module haze_removal_top#(
         output  [23:0]  post_img                
 );
 
+// 透射率下限的唯一来源:tx_get 用它做饱和钳位,
+// haze_removal_cal 用它初始化倒数表的低端镜像。两处必须一致。
+localparam TX_MIN = 8'd26;
+
 wire                 dark_channel_frame_vsync    ;
 wire                 dark_channel_frame_href     ; 
 wire                 dark_channel_frame_clken    ;
@@ -116,7 +120,8 @@ calculate_A u_calculate_A(
 );
 
 tx_get#(
-        .modification_value     (MODIFICATION_VALUE             )
+        .modification_value     (MODIFICATION_VALUE             ),
+        .tx_min                 (TX_MIN                         )
 )u_tx_get(
         .clk                    (clk                            ),
         .rst_n                  (rst_n                          ), 
@@ -166,7 +171,9 @@ time_alignment#(
 
 generate 
 if(Y_ENHANCE_ENABLE == 0) begin
-        haze_removal_cal u_haze_removal_cal(
+        haze_removal_cal#(
+                .tx_min                  (TX_MIN                        )
+        ) u_haze_removal_cal(
                 .clk                     (clk                           ),
                 .rst_n                   (rst_n                         ),  
 
@@ -203,7 +210,9 @@ else begin
         wire    [07 : 0]     tem_Cb_data                ;
         wire    [07 : 0]     tem_Cr_data                ;
 
-        haze_removal_cal u_haze_removal_cal(
+        haze_removal_cal#(
+                .tx_min                  (TX_MIN                        )
+        ) u_haze_removal_cal(
                 .clk                     (clk                           ),
                 .rst_n                   (rst_n                         ),  
 

@@ -6,6 +6,8 @@ hdmi_loop.ip_user_files/
 hdmi_loop.sim/
 hdmi_loop.runs/
 .claude/
+# docs/ 全部为本地资料(文献 PDF、阅读笔记、审计/并行化草稿),不入库;
+docs/
 09.HDMI测试实验.pdf
 vivado.jou
 vivado.log
@@ -43,3 +45,6 @@ tools/*.png
 # (de.txt / hs.txt 已删除:那是早期 HREF_MODE=de|hs 两次 A/B 的 xsim 控制台重定向,
 #  GBK 编码、结论已留档在 tools/tb_haze_removal_top.v 头部第 14-17 行,属冗余。)
 *.tmp
+
+# ---- MATLAB 绘图脚本(本地工具,不入库;生成的 PNG 仍入库) ----
+tools/plot_*.m

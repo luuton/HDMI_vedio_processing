@@ -33,6 +33,14 @@ module tx_get(
 // 被 haze_removal_top 的 MODIFICATION_VALUE 覆盖。
 parameter modification_value = 16'd218;
 
+// 透射率下限。原来这个钳位在 haze_removal_cal 的入路上
+// (`pre_tx_img < 26 ? 26 : pre_tx_img`),实现出来是 LUT4+LUT4+LUT2
+// 三级加约 1.1 ns 布线,正好落在 post_img_r -> A*tx -> value_tem 这条
+// 已经差 0.134 ns 的路径上。把钳位并进这一级的饱和判断(见下),
+// 下游就只剩乘法,而且**不增加任何延迟**(本拍本来就要寄存)。
+// 必须与 haze_removal_cal 的 tx_min 一致,由顶层统一传入。
+parameter tx_min = 8'd26;
+
 // 用倒数表代替组合逻辑的 16/8 除法。原来的除法器需要远
 // 多于一个 6.734 ns 周期(148.5 MHz),属于最严重的失败路径之一。
 // recip[v] = round(2^16 / v)。调用方把 v 的下限钳到 tx_min = 26,所以
@@ -51,6 +59,7 @@ reg         [15 : 0]    modify_A            ;
 reg         [11 : 0]    recip_r             ;
 reg         [27 : 0]    tx_prod_r           ;
 reg         [15 : 0]    tx_q_r              ;
+reg         [7  : 0]    post_img_r          ;
 
 reg                     pre_frame_vsync_d1  ;
 reg                     pre_frame_href_d1   ;
@@ -64,6 +73,9 @@ reg                     pre_frame_clken_d3  ;
 reg                     pre_frame_vsync_d4  ;
 reg                     pre_frame_href_d4   ;
 reg                     pre_frame_clken_d4  ;
+reg                     pre_frame_vsync_d5  ;
+reg                     pre_frame_href_d5   ;
+reg                     pre_frame_clken_d5  ;
 reg         [7  : 0]    A_value_d1          ;
 
 always@(posedge clk or negedge rst_n)begin
@@ -90,6 +102,9 @@ always@(posedge clk or negedge rst_n)begin
         pre_frame_vsync_d4      <=  0                   ;
         pre_frame_href_d4       <=  0                   ;
         pre_frame_clken_d4      <=  0                   ;
+        pre_frame_vsync_d5      <=  0                   ;
+        pre_frame_href_d5       <=  0                   ;
+        pre_frame_clken_d5      <=  0                   ;
         A_value_d1              <=  0                   ;
     end
     else begin
@@ -105,6 +120,9 @@ always@(posedge clk or negedge rst_n)begin
         pre_frame_vsync_d4      <=  pre_frame_vsync_d3  ;
         pre_frame_href_d4       <=  pre_frame_href_d3   ;
         pre_frame_clken_d4      <=  pre_frame_clken_d3  ;
+        pre_frame_vsync_d5      <=  pre_frame_vsync_d4  ;
+        pre_frame_href_d5       <=  pre_frame_href_d4   ;
+        pre_frame_clken_d5      <=  pre_frame_clken_d4  ;
         A_value_d1              <=  A_value             ;
     end
 end
@@ -141,18 +159,35 @@ end
 //    [时序] 这一级的和、饱和判断曾经全是组合逻辑,和下游
 //    calculate_A 的 a_tx = A*tx 乘法、加上跨模块布线凑成一条
 //    8.75 ns 的路径(要求 6.734 ns),是 vin_clk 域 31 个失败端点的
-//    唯一来源。现在把 (tx_prod_r + 32768) >> 16 单独打一拍,
-//    让 DSP48 输出与下游乘法不在同一周期里相遇。
-//    代价:tx 通路多 1 拍,故下面的控制信号也加到 d4,
-//    time_alignment.src_delay 里的 "+ 3" 改成 "+ 4"。
+//    唯一来源。现在分两刀切:
+//      第一刀:把 (tx_prod_r + 32768) >> 16 单独打一拍(tx_q_r),
+//              断开 DSP 输出与下游乘法;
+//      第二刀:把饱和判断也从下一级的主路径上摘出来(post_img_r),
+//              否则 tx_q_r -> 饱和 mux -> 跨模块 -> A*tx -> value_tem
+//              仍有约 6.8 ns,差 0.3 ns 凑不拢(实测 7 个失败端点)。
+//    代价:tx 通路共 5 拍,故下面的控制信号加到 d5,
+//    time_alignment.src_delay 里的 "+ 4" 改成 "+ 5"。
 always@(posedge clk or negedge rst_n)begin
     if(!rst_n)  tx_q_r  <=  16'd0;
     else        tx_q_r  <=  (tx_prod_r + 28'd32768) >> 16;
 end
 
-assign      post_frame_vsync    =   pre_frame_vsync_d4  ;
-assign      post_frame_href     =   pre_frame_href_d4   ;
-assign      post_frame_clken    =   pre_frame_clken_d4  ;
-assign      post_img            =   (tx_q_r > 16'd255) ? 8'd255 : (8'd255 - tx_q_r[7:0]);
+// 饱和 + 透射率下限,合成一次寄存。
+// 三个区间:tx_q > 255 -> 不去雾(t=255);255-tx_q < tx_min -> 钳到 tx_min;
+// 其余 -> t = 255 - tx_q。三者在数学上等价于
+// haze_removal_cal 原来的 saturate() 后再 max(tx_min)。
+wire [15 : 0] tx_lim = 16'd255 - tx_min;   // = 229
+
+always@(posedge clk or negedge rst_n)begin
+    if(!rst_n)  post_img_r  <=  8'd0;
+    else        post_img_r  <=  (tx_q_r > 16'd255) ? 8'd255      :
+                                (tx_q_r > tx_lim)  ? tx_min      :
+                                                     (8'd255 - tx_q_r[7:0]);
+end
+
+assign      post_frame_vsync    =   pre_frame_vsync_d5  ;
+assign      post_frame_href     =   pre_frame_href_d5   ;
+assign      post_frame_clken    =   pre_frame_clken_d5  ;
+assign      post_img            =   post_img_r          ;
 
 endmodule

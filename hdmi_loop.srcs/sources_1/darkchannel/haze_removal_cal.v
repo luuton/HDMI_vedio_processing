@@ -21,10 +21,14 @@ module haze_removal_cal(
 );
 // `define Xilinx_IP
 
-parameter   tx_min   =   8'd26;//A 的最小值,0.1 * 2*8
+parameter   tx_min   =   8'd26;//透射率下限;钳位已前移到 tx_get 的 post_img_r
 
 wire        [7  : 0]    tx_value                 ;
-assign                  tx_value =    pre_tx_img < tx_min ? tx_min : pre_tx_img;
+// 上游 tx_get 在寄存透射率时已经做过饱和 + tx_min 钳位,
+// 这里直接使用。原先的 `pre_tx_img < tx_min ? tx_min : pre_tx_img`
+// 在实现中占 LUT4+LUT4+LUT2 三级并压在跨模块路径上,
+// 移到 tx_get 后不增加延迟。
+assign                  tx_value =    pre_tx_img;
 
 // 带符号的 (pre_img - A) 与 (A * tx) 项。图像差值必须用带符号运算:
 // 大多数有雾像素满足 I < A,而无符号 8 位减法会回绕成
