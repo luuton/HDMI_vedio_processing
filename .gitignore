@@ -37,7 +37,7 @@ webtalk*.log
 # 注意:readme.md 引用的 tools/out.avi_20260921_212043.311.jpg 当前不在磁盘上
 #       (本次核对时确认缺失,且不在 git 历史里)。
 tools/out.avi
-tools/out.mp4
+tools/*.mp4
 # 分析用渲染图(反解源图 / A/B 对比),可重跑得到,不入库
 tools/*.png
 
